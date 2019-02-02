@@ -1,11 +1,14 @@
+import java.util.ArrayDeque;
 import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class BlockStore {
-    private LinkedList<Block> blocks = new LinkedList<>();
+    public volatile boolean isReady;
+    private ArrayDeque<Block> blocks = new ArrayDeque<>(10);
+
 
     public BlockStore() {
-        //???
-
+        isReady = false;
     }
 
     public synchronized void put(Block block) {
@@ -22,19 +25,20 @@ public class BlockStore {
     }
 
     public synchronized Block get() {
-        while (blocks.size()<1) {
+        while (blocks.size()<1 && isReady==false) {
             try {
-                wait();
+                wait(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
         Block blk = blocks.pollFirst();
+        if (blocks.size()<3)
         notify();
         return blk;
     }
 
-    public int blockCount() {
+    public synchronized int blockCount() {
         return blocks.size();
     }
 }
